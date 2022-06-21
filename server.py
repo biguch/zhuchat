@@ -220,7 +220,7 @@ class server:
             self.log.log_message('CONN LOST with %d' % uid, 'clc')
             self.disconnect(uid)
 
-    def send_message(self, uid : int, msg : str, sysmes: bool = False, sender : int):
+    def send_message(self, uid : int, msg : str, sysmes: bool = False, sender : int = -1):
         """
         Sends a message to the particular client
 
