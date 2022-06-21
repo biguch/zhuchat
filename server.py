@@ -4,7 +4,7 @@ from socket import *
 import threading
 from datetime import datetime
 from enum import *
-import os, sys, traceback, selectors
+import sys, traceback, selectors
 
 class messageStatus(Enum):
         UNKNOWN_MSG = -1
