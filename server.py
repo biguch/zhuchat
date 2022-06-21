@@ -4,7 +4,7 @@ from socket import *
 import threading
 from datetime import datetime
 from enum import *
-import sys, traceback, selectors
+import os, sys, traceback, selectors
 
 class messageStatus(Enum):
         UNKNOWN_MSG = -1
@@ -202,7 +202,7 @@ class server:
                 self.log.log_message ('%d: %s' % (uid, msg), 'clm')
             elif code == messageStatus.REQ_DISCONN:
                 self.log.log_message('%d REQUESTED DISCONNECT' % uid, 'clc')
-                self.send_message(uid, 'dc req', True)
+                self.send_message(uid, 'dc req', True, -1)
                 self.disconnect(uid)
             elif code == messageStatus.REQ_MSG:
                 self.log.log_message('%d REQUESTED MESSAGES' % uid, 'clms')
@@ -211,7 +211,7 @@ class server:
                     sender = msg.sender
                     msgText = 'pm ' + msgText
                     if sender != sid and sid not in msg.recipients:
-                        self.send_message(uid, msgText)
+                        self.send_message(uid, msgText, sender=sender)
                     msg.recipients.append(sid)
 
             else:
@@ -220,21 +220,23 @@ class server:
             self.log.log_message('CONN LOST with %d' % uid, 'clc')
             self.disconnect(uid)
 
-    def send_message(self, uid : int, msg : str, sysmes: bool = False):
+    def send_message(self, uid : int, msg : str, sysmes: bool = False, sender : int):
         """
         Sends a message to the particular client
 
         Arguments:
         uid : int -- recipient's uid
         msg : str -- message to be sent
+        sysmes : bool -- denotes whether the message is meant for the system
+        sender : int -- sender's id
         """
         if not sysmes:
-            msg = str(uid) + ': ' + msg
+            msg = '%d: %s' % (sender, msg)
         encodedMsg = msg.encode()
         messagingClient = self._get_client_by_id(uid)
         clientSocket = messagingClient.clientSocket
         clientSocket.sendall(encodedMsg)
-        self.log.log_message('SENT TO %d: %s' % (uid, msg), 'clms')
+        self.log.log_message('%d SENT TO %d: %s' % (sender, uid, msg), 'clms')
 
     def _get_new_id(self):
         """
@@ -267,7 +269,7 @@ class server:
                 self.log.log_message('%d WRONG PASSWORD %s' % (uid, msg), 'clc')
                 handmsg = 'sc 1'
 
-            self.send_message(uid, handmsg, True)
+            self.send_message(uid, handmsg, True, -1)
             if handmsg == 'sc 0':
     #            self.ping(client)
                 client = self._get_client_by_id(uid)
